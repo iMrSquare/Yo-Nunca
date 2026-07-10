@@ -1,0 +1,12 @@
+services:
+  yo-nunca:
+    build:
+      context: .
+    container_name: Yo-Nunca
+    environment:
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-cambiame123}
+    ports:
+      - "3015:3000"
+    volumes:
+      - ./data:/app/server/data
+    restart: unless-stopped

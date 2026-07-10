@@ -1,0 +1,19 @@
+# Dependencias y build
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Datos de la app (base de datos SQLite)
+server/data/
+/data/
+
+# Secretos / configuración local
+.env
+.env.local
+
+# Sistema y editor
+.DS_Store
+*.log
+
+# Configuración local de Claude Code
+.claude/
