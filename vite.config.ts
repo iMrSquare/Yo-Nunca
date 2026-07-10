@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
+import { VitePWA } from 'vite-plugin-pwa'
 import { api } from './server/api.js'
 
 // https://vite.dev/config/
@@ -13,6 +14,7 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
+    server: { host: true },
     plugins: [
       react(),
       {
@@ -26,6 +28,42 @@ export default defineConfig(({ mode }) => {
           server.middlewares.use(api)
         },
       },
+      VitePWA({
+        registerType: 'autoUpdate',
+        includeAssets: ['favicon.svg'],
+        // Sin esto, `npm run dev` no inyecta el manifest ni el service
+        // worker: iOS solo ve las etiquetas apple-mobile-web-app-* sueltas,
+        // sin manifest no entra en verdadero modo standalone (display-mode
+        // daba "false" y Safari reservaba parte de su chrome).
+        devOptions: { enabled: true },
+        manifest: {
+          name: 'Yo Nunca',
+          short_name: 'Yo Nunca',
+          description: 'El juego de "Yo nunca he...". Elige listas, mézclalas y jugad pasando el móvil.',
+          lang: 'es',
+          start_url: '/',
+          scope: '/',
+          display: 'standalone',
+          orientation: 'portrait',
+          theme_color: '#1c0c33',
+          background_color: '#070410',
+          icons: [
+            { src: 'pwa-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+            { src: 'pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+            { src: 'maskable-icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          ],
+        },
+        workbox: {
+          // Nunca cachear la API: las listas/estadísticas deben ir siempre al servidor.
+          navigateFallbackDenylist: [/^\/api\//],
+          runtimeCaching: [
+            {
+              urlPattern: /^\/api\//,
+              handler: 'NetworkOnly',
+            },
+          ],
+        },
+      }),
     ],
   }
 })

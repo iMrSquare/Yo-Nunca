@@ -17,6 +17,7 @@ interface Props {
   onTab: (tab: AdminTab) => void;
   onEditList: (id: string) => void;
   onNewList: () => void;
+  onImportList: (data: { name?: string; color?: string; questions: string[] }) => void;
   onRename: (name: string) => void;
   onAddQuestion: (text: string) => void;
   onUpdateQuestion: (i: number, text: string) => void;
@@ -27,7 +28,7 @@ interface Props {
 }
 
 export default function Admin({
-  t, lists, stats, adminTab, editingId, onBack, onTab, onEditList, onNewList,
+  t, lists, stats, adminTab, editingId, onBack, onTab, onEditList, onNewList, onImportList,
   onRename, onAddQuestion, onUpdateQuestion, onDeleteQuestion, onSetPassword, onDeleteList, editingLocked,
 }: Props) {
   const editing = lists.find((l) => l.id === editingId) || null;
@@ -66,7 +67,7 @@ export default function Admin({
           onDeleteList={onDeleteList}
         />
       ) : adminTab === 'lists' ? (
-        <ListsTab t={t} lists={lists} onEdit={onEditList} onNew={onNewList} />
+        <ListsTab t={t} lists={lists} onEdit={onEditList} onNew={onNewList} onImport={onImportList} />
       ) : adminTab === 'stats' ? (
         <StatsTab t={t} lists={lists} stats={stats} />
       ) : (

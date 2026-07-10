@@ -30,7 +30,7 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
   };
 
   return (
-    <div style={{ height: '100%', background: t.bg, display: 'flex', justifyContent: 'center', alignItems: 'center', fontFamily: t.fontBody, color: t.text }}>
+    <div style={{ height: '100%', background: t.bg, display: 'flex', justifyContent: 'center', alignItems: 'center', fontFamily: t.fontBody, color: t.text, paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <div style={{ width: '100%', maxWidth: 340, padding: '0 30px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
         <div style={{ fontFamily: t.fontHead, fontWeight: 700, fontSize: 32, lineHeight: 1, ...t.titleStyle }}>Ajustes</div>
         <div style={{ fontSize: 14, color: t.dim, textAlign: 'center' }}>Introduce la contraseña para continuar</div>
@@ -103,6 +103,14 @@ export default function AdminRoot() {
     setEditingId(id);
   };
 
+  const importList = (data: { name?: string; color?: string; questions: string[] }) => {
+    const id = 'c' + Date.now();
+    const color = data.color && /^#[0-9a-f]{3,8}$/i.test(data.color) ? data.color : PALETTE[Math.floor(Math.random() * PALETTE.length)];
+    const name = data.name?.trim() || 'Lista importada';
+    mutateLists((ls) => [...ls, { id, name, color, questions: data.questions }]);
+    setEditingId(id);
+  };
+
   const deleteList = () => {
     const id = editingId;
     if (!id || SEED_LIST_IDS.has(id)) return;
@@ -126,7 +134,7 @@ export default function AdminRoot() {
 
   return (
     <div style={{ height: '100%', background: t.bg, display: 'flex', justifyContent: 'center', alignItems: 'stretch', fontFamily: t.fontBody, color: t.text }}>
-      <div style={{ width: '100%', maxWidth: 460, height: '100%', position: 'relative', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div style={{ width: '100%', maxWidth: 460, height: '100%', position: 'relative', display: 'flex', flexDirection: 'column', overflow: 'hidden', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <Admin
           t={t}
           lists={lists}
@@ -137,6 +145,7 @@ export default function AdminRoot() {
           onTab={setAdminTab}
           onEditList={(id) => setEditingId(id)}
           onNewList={newList}
+          onImportList={importList}
           onRename={(name) => editingId && updateList(editingId, (l) => ({ ...l, name }))}
           onAddQuestion={(text) => editingId && updateList(editingId, (l) => ({ ...l, questions: [...l.questions, text] }))}
           onUpdateQuestion={(i, val) => editingId && updateList(editingId, (l) => ({ ...l, questions: l.questions.map((q, j) => (j === i ? val : q)) }))}

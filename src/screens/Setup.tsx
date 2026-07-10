@@ -99,7 +99,9 @@ export default function Setup({ t, lists, selected, onToggle, onBack, onStart }:
         </div>
       </div>
 
-      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '18px 24px 26px', background: t.footerBg, borderTop: `1px solid ${t.border}`, backdropFilter: 'blur(12px)' }}>
+      {/* Absoluto respecto al padding-box del contenedor: ignora su paddingBottom
+          de safe-area, así que el hueco del indicador de inicio se compensa aquí. */}
+      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '18px 24px calc(26px + env(safe-area-inset-bottom))', background: t.footerBg, borderTop: `1px solid ${t.border}`, backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
           <span style={{ fontSize: 13, color: t.dim }}>{selectedCount} listas seleccionadas</span>
           <span style={{ fontFamily: t.fontHead, fontWeight: 700, fontSize: 18, color: t.accent }}>{totalQuestions} preguntas</span>

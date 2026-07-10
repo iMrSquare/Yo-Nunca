@@ -14,14 +14,60 @@
 }
 
 html, body {
-  margin: 0;
   height: var(--app-height);
+  margin: 0;
   overflow: hidden;
   overscroll-behavior: none;
+  /*
+   * background-color (plano) y background-image (degradado) por separado
+   * a propósito: Safari 26+ ya no lee la meta "theme-color" y en su lugar
+   * tiñe la barra de estado y la zona inferior leyendo el background-color
+   * sólido del <body>. La propiedad abreviada "background" con un gradiente
+   * resetea background-color a transparente, que es justo lo que causaba
+   * el hueco blanco.
+   */
+  background-color: #1c0c33;
+  background-image: radial-gradient(125% 80% at 50% -8%, #1c0c33 0%, #070410 62%);
 }
 
 #root {
   height: var(--app-height);
+  overflow: hidden;
+}
+
+/*
+ * Ver comentario en index.html: color de referencia por borde para Safari 26+.
+ * z-index positivo a propósito: con z-index negativo Safari parece ignorar
+ * el elemento al buscar de dónde sacar el color de la barra/zona segura.
+ *
+ * REGLAS APRENDIDAS A BASE DE ROMPERLO (no repetir):
+ * - background-color SÓLIDO y nada más. Añadirles un background-image
+ *   (aunque el color siga debajo) rompe el muestreo y iOS cae al
+ *   background-color del body, pintando la zona inferior de morado.
+ *   Documentado también en benfrain.com/ios26-safari-theme-color-tab-tinting.
+ * - NO ocultarlas en standalone con @media (display-mode: standalone):
+ *   la PWA instalada usa el mismo muestreo; sin franjas → banda morada.
+ * - iOS pinta esas zonas con color OPACO por encima de la página (el
+ *   contenido no puede asomar por debajo); por eso el layout reserva
+ *   env(safe-area-inset-bottom) para que nada útil quede tapado.
+ */
+.yn-safe-tint {
+  position: fixed;
+  left: 0;
+  width: 100%;
+  height: 8px;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.yn-safe-tint-top {
+  top: 0;
+  background-color: #1c0c33;
+}
+
+.yn-safe-tint-bottom {
+  bottom: 0;
+  background-color: #070410;
 }
 
 button {

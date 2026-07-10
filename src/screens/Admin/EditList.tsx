@@ -2,6 +2,9 @@ import { useState } from 'react';
 import type { Theme } from '../../theme';
 import type { QuestionList } from '../../types';
 
+// Marcas diacríticas combinantes (acentos sueltos tras normalize('NFD')): U+0300–U+036F.
+const DIACRITICS_RE = new RegExp('[̀-ͯ]', 'g');
+
 interface Props {
   t: Theme;
   list: QuestionList;
@@ -42,6 +45,19 @@ export default function EditList({ t, list, locked, onRename, onAddQuestion, onU
 
   const hasPassword = !!list.password;
 
+  const exportList = () => {
+    // Sin password ni id: es contenido para compartir/respaldar, no una
+    // copia exacta de la fila de la base de datos.
+    const blob = new Blob([JSON.stringify({ name: list.name, color: list.color, questions: list.questions }, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const slug = list.name.trim().toLowerCase().normalize('NFD').replace(DIACRITICS_RE, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    a.download = `${slug || 'lista'}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="yn-scroll" style={{ flex: 1, padding: '16px 24px 30px' }}>
       <label style={{ fontSize: 12, letterSpacing: '.12em', textTransform: 'uppercase', color: t.dim, fontWeight: 600 }}>Nombre de la lista</label>
@@ -80,6 +96,13 @@ export default function EditList({ t, list, locked, onRename, onAddQuestion, onU
         />
         <button onClick={submitNewQ} style={{ padding: '0 20px', borderRadius: 16, background: t.heroGrad, color: t.accentText, fontWeight: 700, fontSize: 22, flex: 'none' }}>+</button>
       </div>
+
+      {/* Exportar a JSON: no disponible en listas iniciales */}
+      {!locked && (
+        <button onClick={exportList} style={{ marginTop: 20, width: '100%', padding: 14, borderRadius: t.radius, background: t.surface, border: `1px solid ${t.border}`, color: t.text, fontWeight: 600, fontSize: 14 }}>
+          ↓ Exportar lista (.json)
+        </button>
+      )}
 
       {/* Contraseña de acceso: no disponible en listas iniciales */}
       {!locked && (

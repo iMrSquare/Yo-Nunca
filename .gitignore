@@ -1,6 +1,7 @@
 # Dependencias y build
 node_modules/
 dist/
+dev-dist/
 *.tsbuildinfo
 
 # Datos de la app (base de datos SQLite)

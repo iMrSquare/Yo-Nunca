@@ -1,16 +1,18 @@
-# Yo Nunca
+<p align="center">
+  <img src="public/favicon.svg" width="96" height="96" alt="Yo Nunca" />
+</p>
 
-Web app del clásico juego "Yo nunca he...". Elige listas de preguntas (Amigos, Romántico, Trabajo, Cultura Pop, Fiesta, Picante +18), mézclalas y jugad pasando el móvil.
+<h1 align="center">Yo Nunca</h1>
 
-Incluye un panel de administración en `/adm` para crear tus propias listas, protegerlas con contraseña y ver estadísticas de partidas. Las listas y estadísticas se guardan en una base de datos SQLite en el servidor, así que se comparten entre dispositivos.
+<p align="center">
+  Juego web del clásico "Yo nunca he...". Elige listas de preguntas, mézclalas al azar y jugad pasando el móvil.
+</p>
 
-## Instalación con Docker (recomendado)
+---
 
-Requisitos: Docker y Docker Compose.
+## 1. Instalación con Docker Compose
 
-### Opción rápida: imagen publicada (sin clonar el repo)
-
-Cada tag `vX.Y.Z` se publica automáticamente en GitHub Container Registry: `ghcr.io/imrsquare/yo-nunca`.
+Requisitos: [Docker](https://docs.docker.com/get-docker/) y [Docker Compose](https://docs.docker.com/compose/).
 
 Crea un `docker-compose.yml`:
 
@@ -28,63 +30,41 @@ services:
       - ./data:/app/server/data
 ```
 
-Y un `.env` en la misma carpeta con tu contraseña:
-
-```bash
-echo "ADMIN_PASSWORD=tu_contraseña" > .env
-```
-
-Levántalo:
+Y levántalo:
 
 ```bash
 docker compose up -d
 ```
 
-### Opción alternativa: construir desde el código fuente
+## 2. Contraseña de administración por defecto
 
-1. Clona el repositorio:
+Si no defines `ADMIN_PASSWORD`, se usa la contraseña por defecto:
 
-   ```bash
-   git clone https://github.com/iMrSquare/Yo-Nunca.git
-   cd Yo-Nunca
-   ```
-
-2. Crea un archivo `.env` en la raíz del proyecto con la contraseña de acceso al panel de administración (`/adm`):
-
-   ```bash
-   echo "ADMIN_PASSWORD=tu_contraseña" > .env
-   ```
-
-   Si no defines este archivo, se usará la contraseña por defecto `cambiame123`.
-
-3. Levanta la app:
-
-   ```bash
-   docker compose up --build -d
-   ```
-
-### En ambos casos
-
-Abre `http://localhost:3015` para jugar, o `http://localhost:3015/adm` para administrar las listas.
-
-Los datos (listas y estadísticas) se guardan en `./data`, que persiste entre reinicios del contenedor.
-
-> La contraseña se lee en tiempo de ejecución, así que para cambiarla basta con editar la variable `ADMIN_PASSWORD` y hacer `docker compose up -d` (no hace falta reconstruir ni volver a descargar la imagen).
-
-## Desarrollo local (sin Docker)
-
-Requisitos: Node.js 22.5+ (usa `node:sqlite`, incluido en el propio Node).
-
-```bash
-npm install
-npm run dev
+```
+cambiame123
 ```
 
-La app queda disponible en `http://localhost:5173`, sirviendo también la API sobre la misma base de datos SQLite. La contraseña de `/adm` se lee de `.env.local` (`ADMIN_PASSWORD=...`); si no existe, se usa `cambiame123`.
+Cámbiala antes de exponer la app fuera de tu red local (ver variables de entorno abajo).
 
-Para compilar y ejecutar en modo producción:
+## 3. Variables de entorno
 
-```bash
-npm run build
-ADMIN_PASSWORD=tu_contraseña npm start
-```
+| Variable | Obligatoria | Por defecto | Descripción |
+|---|---|---|---|
+| `ADMIN_PASSWORD` | No | `cambiame123` | Contraseña de acceso al panel de administración (`/adm`). Se lee en tiempo de ejecución: para cambiarla basta con editarla y hacer `docker compose up -d`, sin reconstruir la imagen. |
+
+## 4. Primer acceso
+
+- **Jugar**: abre `http://localhost:3015`.
+- **Administrar listas**: abre `http://localhost:3015/adm` e introduce tu `ADMIN_PASSWORD`. Desde ahí puedes crear listas propias, protegerlas con contraseña individual y consultar estadísticas de partidas.
+
+Las listas y estadísticas se guardan en `./data` (base de datos SQLite), que persiste entre reinicios del contenedor.
+
+## 5. Capturas
+
+| Inicio | Elegir listas | Partida |
+|---|---|---|
+| ![Inicio](img/home.png) | ![Elegir listas](img/setup.png) | ![Partida](img/game.png) |
+
+| Listas (admin) | Estadísticas (admin) | Acerca de (admin) |
+|---|---|---|
+| ![Listas](img/admin-lists.png) | ![Estadísticas](img/admin-stats.png) | ![Acerca de](img/admin-about.png) |
