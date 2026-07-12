@@ -2,7 +2,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { SEED_LISTS } from './seed.js';
+import { SEED_LISTS, SEED_CHALLENGES } from './seed.js';
 
 const dataDir = path.join(path.dirname(fileURLToPath(import.meta.url)), 'data');
 mkdirSync(dataDir, { recursive: true });
@@ -39,6 +39,12 @@ db.exec(`
     list_id TEXT PRIMARY KEY,
     count   INTEGER NOT NULL DEFAULT 0
   );
+
+  CREATE TABLE IF NOT EXISTS challenges (
+    id       INTEGER PRIMARY KEY AUTOINCREMENT,
+    position INTEGER NOT NULL,
+    text     TEXT NOT NULL
+  );
 `);
 
 const insertList = db.prepare(
@@ -58,6 +64,29 @@ function insertLists(lists) {
 if (db.prepare('SELECT COUNT(*) AS n FROM lists').get().n === 0) {
   insertLists(SEED_LISTS);
 }
+
+const insertChallenge = db.prepare(
+  'INSERT INTO challenges (position, text) VALUES (?, ?)'
+);
+
+function insertChallenges(texts) {
+  texts.forEach((text, i) => insertChallenge.run(i, text));
+}
+
+if (db.prepare('SELECT COUNT(*) AS n FROM challenges').get().n === 0) {
+  insertChallenges(SEED_CHALLENGES);
+}
+
+// Migración aditiva: CREATE TABLE IF NOT EXISTS no toca una tabla `games` ya
+// existente de una versión anterior, así que las columnas nuevas se añaden a mano.
+function ensureColumn(table, column, def) {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all().map((c) => c.name);
+  if (!cols.includes(column)) {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${def}`);
+  }
+}
+ensureColumn('games', 'challenges_shown', 'INTEGER NOT NULL DEFAULT 0');
+ensureColumn('games', 'challenges_enabled', 'INTEGER NOT NULL DEFAULT 0');
 
 export function getLists() {
   const lists = db.prepare('SELECT id, name, color, password FROM lists ORDER BY position').all();
@@ -83,23 +112,45 @@ export function replaceLists(lists) {
   }
 }
 
+export function getChallenges() {
+  return db.prepare('SELECT text FROM challenges ORDER BY position').all().map((r) => r.text);
+}
+
+export function replaceChallenges(texts) {
+  db.exec('BEGIN');
+  try {
+    db.exec('DELETE FROM challenges;');
+    insertChallenges(texts);
+    db.exec('COMMIT');
+  } catch (err) {
+    db.exec('ROLLBACK');
+    throw err;
+  }
+}
+
 export function getStats() {
   const games = db.prepare('SELECT COUNT(*) AS n FROM games').get().n;
   const questions = db.prepare('SELECT COALESCE(SUM(questions_shown), 0) AS n FROM games').get().n;
+  const challenges = db.prepare('SELECT COALESCE(SUM(challenges_shown), 0) AS n FROM games').get().n;
   const byCat = {};
   for (const row of db.prepare('SELECT list_id, count FROM cat_usage').all()) {
     byCat[row.list_id] = row.count;
   }
   const recent = db
-    .prepare('SELECT label, questions_shown AS n, started_at AS startedAt FROM games ORDER BY id DESC LIMIT 8')
-    .all();
-  return { games: Number(games), questions: Number(questions), byCat, recent };
+    .prepare(`
+      SELECT id, label, questions_shown AS n, challenges_shown AS challenges,
+             challenges_enabled AS challengesEnabled, started_at AS startedAt
+      FROM games ORDER BY id DESC LIMIT 8
+    `)
+    .all()
+    .map((r) => ({ ...r, challengesEnabled: !!r.challengesEnabled }));
+  return { games: Number(games), questions: Number(questions), challenges: Number(challenges), byCat, recent };
 }
 
-export function createGame(label) {
+export function createGame(label, challengesEnabled) {
   const { lastInsertRowid } = db
-    .prepare('INSERT INTO games (label, started_at) VALUES (?, ?)')
-    .run(label, Date.now());
+    .prepare('INSERT INTO games (label, started_at, challenges_enabled) VALUES (?, ?, ?)')
+    .run(label, Date.now(), challengesEnabled ? 1 : 0);
   return Number(lastInsertRowid);
 }
 
@@ -112,4 +163,16 @@ export function recordQuestion(gameId, catId) {
     'INSERT INTO cat_usage (list_id, count) VALUES (?, 1) ON CONFLICT(list_id) DO UPDATE SET count = count + 1'
   ).run(catId);
   return true;
+}
+
+export function recordChallenge(gameId) {
+  const { changes } = db
+    .prepare('UPDATE games SET challenges_shown = challenges_shown + 1 WHERE id = ?')
+    .run(gameId);
+  return !!changes;
+}
+
+export function deleteGame(gameId) {
+  const { changes } = db.prepare('DELETE FROM games WHERE id = ?').run(gameId);
+  return !!changes;
 }

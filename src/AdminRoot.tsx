@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { QuestionList, Stats } from './types';
 import { THEME } from './theme';
-import { fetchLists, fetchStats, saveLists, checkAdminPassword } from './storage';
+import { fetchLists, fetchStats, saveLists, fetchChallenges, saveChallenges, checkAdminPassword, deleteGameRemote } from './storage';
 import { SEED_LIST_IDS } from './seed';
 import Admin, { type AdminTab } from './screens/Admin/Admin';
 
@@ -30,7 +30,7 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
   };
 
   return (
-    <div style={{ height: '100%', background: t.bg, display: 'flex', justifyContent: 'center', alignItems: 'center', fontFamily: t.fontBody, color: t.text, paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+    <div style={{ height: '100%', background: t.bg, display: 'flex', justifyContent: 'center', alignItems: 'center', fontFamily: t.fontBody, color: t.text }}>
       <div style={{ width: '100%', maxWidth: 340, padding: '0 30px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
         <div style={{ fontFamily: t.fontHead, fontWeight: 700, fontSize: 32, lineHeight: 1, ...t.titleStyle }}>Ajustes</div>
         <div style={{ fontSize: 14, color: t.dim, textAlign: 'center' }}>Introduce la contraseña para continuar</div>
@@ -71,11 +71,14 @@ export default function AdminRoot() {
   const [adminTab, setAdminTab] = useState<AdminTab>('lists');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [lists, setLists] = useState<QuestionList[] | null>(null);
-  const [stats, setStats] = useState<Stats>({ games: 0, questions: 0, byCat: {}, recent: [] });
+  const [challenges, setChallenges] = useState<string[] | null>(null);
+  const [stats, setStats] = useState<Stats>({ games: 0, questions: 0, challenges: 0, byCat: {}, recent: [] });
   const dirty = useRef(false);
+  const dirtyChallenges = useRef(false);
 
   useEffect(() => {
     fetchLists().then((ls) => setLists((cur) => cur ?? ls));
+    fetchChallenges().then((cs) => setChallenges((cur) => cur ?? cs));
     fetchStats().then(setStats);
   }, []);
 
@@ -85,6 +88,12 @@ export default function AdminRoot() {
     const id = setTimeout(() => { saveLists(lists); }, 500);
     return () => clearTimeout(id);
   }, [lists]);
+
+  useEffect(() => {
+    if (!challenges || !dirtyChallenges.current) return;
+    const id = setTimeout(() => { saveChallenges(challenges); }, 500);
+    return () => clearTimeout(id);
+  }, [challenges]);
 
   if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />;
 
@@ -111,6 +120,16 @@ export default function AdminRoot() {
     setEditingId(id);
   };
 
+  const mutateChallenges = (fn: (cs: string[]) => string[]) => {
+    dirtyChallenges.current = true;
+    setChallenges((cs) => (cs ? fn(cs) : cs));
+  };
+
+  const addChallenge = (text: string) => mutateChallenges((cs) => [...cs, text]);
+  const updateChallenge = (i: number, text: string) => mutateChallenges((cs) => cs.map((c, j) => (j === i ? text : c)));
+  const deleteChallenge = (i: number) => mutateChallenges((cs) => cs.filter((_, j) => j !== i));
+  const importChallenges = (texts: string[]) => mutateChallenges(() => texts);
+
   const deleteList = () => {
     const id = editingId;
     if (!id || SEED_LIST_IDS.has(id)) return;
@@ -119,12 +138,17 @@ export default function AdminRoot() {
     setAdminTab('lists');
   };
 
+  const deleteGame = (id: number) => {
+    setStats((s) => ({ ...s, games: Math.max(0, s.games - 1), recent: s.recent.filter((r) => r.id !== id) }));
+    deleteGameRemote(id).then(() => fetchStats().then(setStats));
+  };
+
   const adminBack = () => {
     if (editingId) setEditingId(null);
     else window.location.href = '/';
   };
 
-  if (!lists) {
+  if (!lists || !challenges) {
     return (
       <div style={{ height: '100%', background: t.bg, display: 'flex', justifyContent: 'center', alignItems: 'center', fontFamily: t.fontBody, color: t.dim }}>
         Cargando…
@@ -134,10 +158,11 @@ export default function AdminRoot() {
 
   return (
     <div style={{ height: '100%', background: t.bg, display: 'flex', justifyContent: 'center', alignItems: 'stretch', fontFamily: t.fontBody, color: t.text }}>
-      <div style={{ width: '100%', maxWidth: 460, height: '100%', position: 'relative', display: 'flex', flexDirection: 'column', overflow: 'hidden', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <div style={{ width: '100%', maxWidth: 460, height: '100%', position: 'relative', display: 'flex', flexDirection: 'column', overflow: 'hidden', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <Admin
           t={t}
           lists={lists}
+          challenges={challenges}
           stats={stats}
           adminTab={adminTab}
           editingId={editingId}
@@ -153,6 +178,11 @@ export default function AdminRoot() {
           onSetPassword={(pwd) => editingId && !SEED_LIST_IDS.has(editingId) && updateList(editingId, (l) => ({ ...l, password: pwd }))}
           onDeleteList={deleteList}
           editingLocked={!!editingId && SEED_LIST_IDS.has(editingId)}
+          onAddChallenge={addChallenge}
+          onUpdateChallenge={updateChallenge}
+          onDeleteChallenge={deleteChallenge}
+          onImportChallenges={importChallenges}
+          onDeleteGame={deleteGame}
         />
       </div>
     </div>

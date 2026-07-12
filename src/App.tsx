@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Card, QuestionList } from './types';
 import { THEME } from './theme';
-import { fetchLists, startGameRemote, recordQuestionRemote } from './storage';
+import { fetchLists, fetchChallenges, startGameRemote, recordQuestionRemote, recordChallengeRemote } from './storage';
 import Home from './screens/Home';
 import Setup from './screens/Setup';
 import Game from './screens/Game';
@@ -26,16 +26,25 @@ function buildQueue(lists: QuestionList[], selected: Record<string, boolean>): C
 
 const t = THEME;
 
+const CHALLENGE_BASE_CHANCE = 0.05;
+const CHALLENGE_CHANCE_STEP = 0.05;
+
 export default function App() {
   const [screen, setScreen] = useState<Screen>('home');
-  const [selected, setSelected] = useState<Record<string, boolean>>({ amigos: true, romantico: true, fiesta: true });
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [queue, setQueue] = useState<Card[]>([]);
   const [idx, setIdx] = useState(0);
   const [anim, setAnim] = useState<'in' | 'out' | null>(null);
   const [lists, setLists] = useState<QuestionList[]>([]);
+  const [challenges, setChallenges] = useState<string[]>([]);
+  const [challengesEnabled, setChallengesEnabled] = useState(true);
+  const [challengeChance, setChallengeChance] = useState(CHALLENGE_BASE_CHANCE);
+  const [activeChallenge, setActiveChallenge] = useState<string | null>(null);
+  const [challengeRule, setChallengeRule] = useState<{ idx: number; text: string } | null>(null);
   const gameRef = useRef<Promise<number | null>>(Promise.resolve(null));
 
   useEffect(() => { fetchLists().then(setLists); }, []);
+  useEffect(() => { fetchChallenges().then(setChallenges); }, []);
 
   const toggleCat = (id: string) => setSelected((s) => ({ ...s, [id]: !s[id] }));
 
@@ -43,7 +52,7 @@ export default function App() {
     const q = buildQueue(lists, selected);
     if (!q.length) return;
     const names = lists.filter((l) => selected[l.id]).map((l) => l.name.split(' ')[0]);
-    gameRef.current = startGameRemote(names.join(' · '));
+    gameRef.current = startGameRemote(names.join(' · '), challengesEnabled);
     setQueue(q);
     setIdx(0);
     setAnim(null);
@@ -66,18 +75,27 @@ export default function App() {
       if (next < queue.length) {
         requestAnimationFrame(() => requestAnimationFrame(() => setAnim(null)));
       }
+
+      setChallengeRule((prev) => (prev && prev.idx === next ? prev : null));
+      if (challengesEnabled && challenges.length && next < queue.length) {
+        if (Math.random() < challengeChance) {
+          const text = challenges[Math.floor(Math.random() * challenges.length)];
+          setActiveChallenge(text);
+          setChallengeRule({ idx: next, text });
+          setChallengeChance(CHALLENGE_BASE_CHANCE);
+          recordChallengeRemote(gameRef.current);
+        } else {
+          setChallengeChance((c) => Math.min(c + CHALLENGE_CHANCE_STEP, 1));
+        }
+      }
     }, 270);
   };
 
-  const restart = () => {
-    setQueue(buildQueue(lists, selected));
-    setIdx(0);
-    setAnim(null);
-  };
+  const dismissChallenge = () => setActiveChallenge(null);
 
   return (
     <div style={{ height: '100%', background: t.bg, display: 'flex', justifyContent: 'center', alignItems: 'stretch', fontFamily: t.fontBody, color: t.text }}>
-      <div style={{ width: '100%', maxWidth: 460, height: '100%', position: 'relative', display: 'flex', flexDirection: 'column', overflow: 'hidden', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <div style={{ width: '100%', maxWidth: 460, height: '100%', position: 'relative', display: 'flex', flexDirection: 'column', overflow: 'hidden', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         {screen === 'home' && (
           <Home t={t} appName={APP_NAME} onPlay={() => setScreen('setup')} />
         )}
@@ -89,6 +107,8 @@ export default function App() {
             onToggle={toggleCat}
             onBack={() => setScreen('home')}
             onStart={startGame}
+            challengesEnabled={challengesEnabled}
+            onToggleChallenges={() => setChallengesEnabled((v) => !v)}
           />
         )}
         {screen === 'game' && (
@@ -99,8 +119,10 @@ export default function App() {
             anim={anim}
             onHome={() => setScreen('home')}
             onAdvance={advance}
-            onRestart={restart}
             onSetup={() => setScreen('setup')}
+            activeChallenge={activeChallenge}
+            onDismissChallenge={dismissChallenge}
+            challengeRule={challengeRule?.idx === idx ? challengeRule.text : null}
           />
         )}
       </div>

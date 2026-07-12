@@ -9,13 +9,15 @@ interface Props {
   anim: 'in' | 'out' | null;
   onHome: () => void;
   onAdvance: () => void;
-  onRestart: () => void;
   onSetup: () => void;
+  activeChallenge: string | null;
+  onDismissChallenge: () => void;
+  challengeRule: string | null;
 }
 
 const SWIPE_THRESHOLD = 70;
 
-export default function Game({ t, queue, idx, anim, onHome, onAdvance, onRestart, onSetup }: Props) {
+export default function Game({ t, queue, idx, anim, onHome, onAdvance, onSetup, activeChallenge, onDismissChallenge, challengeRule }: Props) {
   const total = queue.length;
   const playing = idx < total;
   const finished = total > 0 && idx >= total;
@@ -88,6 +90,11 @@ export default function Game({ t, queue, idx, anim, onHome, onAdvance, onRestart
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 99, background: t.surface, fontSize: 12, fontWeight: 600, letterSpacing: '.04em', marginTop: 26 }}>
                 <span style={{ width: 9, height: 9, borderRadius: '50%', background: cur.color }} />{cur.cat}
               </div>
+              {challengeRule && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 16, background: `${t.accent}22`, border: `1px solid ${t.accent}55`, fontSize: 13, fontWeight: 600, marginTop: 12 }}>
+                  <span style={{ fontSize: 15 }}>🔥</span>{challengeRule}
+                </div>
+              )}
             </div>
             <div style={{ textAlign: 'center', marginTop: 26, fontSize: 14, color: t.dim, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
               <span>Toca o desliza para la siguiente</span><span style={{ fontSize: 18 }}>→</span>
@@ -97,20 +104,33 @@ export default function Game({ t, queue, idx, anim, onHome, onAdvance, onRestart
       )}
 
       {finished && (
-        <div className="yn-scroll" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '40px 30px' }}>
+        <div className="yn-scroll" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '40px 30px', paddingBottom: 'max(40px, env(safe-area-inset-bottom, 0px))' }}>
           <div style={{ fontSize: 90, fontWeight: 700, fontFamily: t.fontHead, lineHeight: 1, ...t.titleStyle }}>¡Fin!</div>
           <div style={{ fontSize: 17, color: t.dim, marginTop: 16, lineHeight: 1.5 }}>
             Habéis pasado por <b style={{ color: t.text }}>{total}</b> preguntas.<br />¿Otra ronda?
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 34, width: '100%', maxWidth: 300 }}>
-            <button onClick={onRestart} style={{ width: '100%', padding: 18, borderRadius: t.radius, background: t.heroGrad, color: t.accentText, fontFamily: t.fontHead, fontWeight: 700, fontSize: 17, boxShadow: t.btnShadow }}>
-              Repetir con las mismas listas
-            </button>
-            <button onClick={onSetup} style={{ width: '100%', padding: 15, borderRadius: t.radius, background: t.surface, color: t.text, fontWeight: 600, fontSize: 15 }}>
+            <button onClick={onSetup} style={{ width: '100%', padding: 18, borderRadius: t.radius, background: t.heroGrad, color: t.accentText, fontFamily: t.fontHead, fontWeight: 700, fontSize: 17, boxShadow: t.btnShadow }}>
               Cambiar listas
             </button>
-            <button onClick={onHome} style={{ width: '100%', padding: 13, background: 'none', color: t.dim, fontWeight: 600, fontSize: 14 }}>
+            <button onClick={onHome} style={{ width: '100%', padding: 15, borderRadius: t.radius, background: t.surface, color: t.text, fontWeight: 600, fontSize: 15 }}>
               Volver al inicio
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Popup de reto */}
+      {activeChallenge && (
+        <div
+          style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, backdropFilter: 'blur(6px)', zIndex: 10 }}
+        >
+          <div style={{ width: '100%', maxWidth: 340, background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 28, padding: '28px 24px', boxShadow: t.cardShadow, textAlign: 'center' }}>
+            <div style={{ fontSize: 40, marginBottom: 10 }}>🔥</div>
+            <div style={{ fontFamily: t.fontHead, fontWeight: 700, fontSize: 20, marginBottom: 8 }}>¡Reto!</div>
+            <div style={{ fontSize: 15, color: t.text, lineHeight: 1.5, marginBottom: 22 }}>{activeChallenge}</div>
+            <button onClick={onDismissChallenge} style={{ width: '100%', padding: 14, borderRadius: t.radius, background: t.heroGrad, color: t.accentText, fontWeight: 700, fontSize: 15, boxShadow: t.btnShadow }}>
+              ¡Entendido!
             </button>
           </div>
         </div>

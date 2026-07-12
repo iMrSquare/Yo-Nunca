@@ -95,3 +95,33 @@ export const SEED_LISTS = [
 
 // Ids de las listas de fábrica: no se pueden eliminar (ver api.js).
 export const SEED_LIST_IDS = new Set(SEED_LISTS.map((l) => l.id));
+
+// Retos iniciales con los que se rellena la base de datos la primera vez.
+// (Espejo de src/seed.ts, que el cliente solo usa como respaldo sin conexión.)
+export const SEED_CHALLENGES = [
+  'En la próxima pregunta, quien beba, bebe el doble 🍹',
+  'En la próxima pregunta, quien NO beba, da un trago de penalización',
+  'Antes de responder la próxima, brindad todos',
+  'En la próxima pregunta, quien beba tiene que hacerlo con la mano contraria',
+  'En la próxima pregunta, el primero en beber elige a alguien más para que beba también',
+  'En la próxima pregunta, quien beba tiene que ponerse de pie para hacerlo',
+  'En la próxima pregunta, si beben más chicas que chicos, ellos beben el doble',
+  'En la próxima pregunta, si beben más chicos que chicas, ellas beben el doble',
+  'En la próxima pregunta, solo beben los chicos',
+  'En la próxima pregunta, solo beben las chicas',
+  'En la próxima pregunta, si un chico bebe, todas las chicas beben con él',
+  'En la próxima pregunta, si una chica bebe, todos los chicos beben con ella',
+  'En la próxima pregunta, los chicos brindan entre ellos antes de responder',
+  'En la próxima pregunta, las chicas brindan entre ellas antes de responder',
+  'En la próxima pregunta, el chico que beba reparte un trago a la chica que elija',
+  'En la próxima pregunta, la chica que beba reparte un trago al chico que elija',
+  'En la próxima pregunta, quien beba debe hacerlo sin usar las manos',
+  'En la próxima pregunta, quien beba debe imitar a un animal',
+  'En la próxima pregunta, quien tenga el móvil con menos batería reparte dos tragos',
+  'En la próxima pregunta, quien lleve la prenda más colorida bebe',
+  'En la próxima pregunta, quien tenga el cumpleaños más próximo bebe doble',
+  'En la próxima pregunta, quien esté sentado más cerca de la puerta bebe',
+  'En la próxima pregunta, hay una ronda de tragos para todos, haya bebido quien haya bebido 🥂',
+  'En la próxima pregunta, quien beba lo hace de un solo trago',
+  'En la próxima pregunta, quien no haya bebido en toda la partida debe beber ahora',
+];

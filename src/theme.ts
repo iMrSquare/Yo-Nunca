@@ -32,7 +32,7 @@ export const THEME: Theme = {
   radius: '22px',
   heroGrad: 'linear-gradient(135deg,#ff2e9a 0%,#9b5cff 55%,#21e6c1 100%)',
   cardShadow: '0 26px 70px rgba(155,92,255,.34)',
-  btnShadow: '0 14px 38px rgba(255,46,154,.45)',
+  btnShadow: '0 6px 16px rgba(255,46,154,.32)',
   titleStyle: {
     background: 'linear-gradient(135deg,#ff2e9a,#9b5cff 55%,#21e6c1)',
     WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',

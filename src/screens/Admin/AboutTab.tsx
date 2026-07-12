@@ -1,6 +1,6 @@
 import type { Theme } from '../../theme';
 
-const APP_VERSION = '1.0.3';
+const APP_VERSION = '1.2.8';
 const AUTHOR_URL = 'https://imrsquare.com';
 const GITHUB_URL = 'https://github.com/iMrSquare';
 

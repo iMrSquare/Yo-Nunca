@@ -9,14 +9,18 @@ export interface QuestionList {
 }
 
 export interface RecentEntry {
+  id: number;
   label: string;
   n: number;
+  challenges: number;
+  challengesEnabled: boolean;
   when: string;
 }
 
 export interface Stats {
   games: number;
   questions: number;
+  challenges: number;
   byCat: Record<string, number>;
   recent: RecentEntry[];
 }

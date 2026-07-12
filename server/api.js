@@ -1,5 +1,5 @@
 import express from 'express';
-import { getLists, replaceLists, getStats, createGame, recordQuestion } from './db.js';
+import { getLists, replaceLists, getChallenges, replaceChallenges, getStats, createGame, recordQuestion, recordChallenge, deleteGame } from './db.js';
 import { SEED_LIST_IDS } from './seed.js';
 
 function isValidList(l) {
@@ -47,13 +47,28 @@ api.put('/api/lists', (req, res) => {
   res.json({ ok: true });
 });
 
+api.get('/api/challenges', (_req, res) => {
+  res.json(getChallenges());
+});
+
+api.put('/api/challenges', (req, res) => {
+  const challenges = req.body;
+  if (!Array.isArray(challenges) || !challenges.every((c) => typeof c === 'string' && c.trim())) {
+    res.status(400).json({ error: 'Formato de retos inválido' });
+    return;
+  }
+  replaceChallenges(challenges);
+  res.json({ ok: true });
+});
+
 api.get('/api/stats', (_req, res) => {
   res.json(getStats());
 });
 
 api.post('/api/games', (req, res) => {
   const label = typeof req.body?.label === 'string' ? req.body.label.slice(0, 200) : '';
-  res.json({ id: createGame(label || 'Partida') });
+  const challengesEnabled = req.body?.challengesEnabled === true;
+  res.json({ id: createGame(label || 'Partida', challengesEnabled) });
 });
 
 api.post('/api/games/:id/question', (req, res) => {
@@ -64,6 +79,32 @@ api.post('/api/games/:id/question', (req, res) => {
     return;
   }
   if (!recordQuestion(gameId, catId)) {
+    res.status(404).json({ error: 'Partida no encontrada' });
+    return;
+  }
+  res.json({ ok: true });
+});
+
+api.post('/api/games/:id/challenge', (req, res) => {
+  const gameId = Number(req.params.id);
+  if (!Number.isInteger(gameId)) {
+    res.status(400).json({ error: 'Petición inválida' });
+    return;
+  }
+  if (!recordChallenge(gameId)) {
+    res.status(404).json({ error: 'Partida no encontrada' });
+    return;
+  }
+  res.json({ ok: true });
+});
+
+api.delete('/api/games/:id', (req, res) => {
+  const gameId = Number(req.params.id);
+  if (!Number.isInteger(gameId)) {
+    res.status(400).json({ error: 'Petición inválida' });
+    return;
+  }
+  if (!deleteGame(gameId)) {
     res.status(404).json({ error: 'Partida no encontrada' });
     return;
   }

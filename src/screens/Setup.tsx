@@ -9,6 +9,8 @@ interface Props {
   onToggle: (id: string) => void;
   onBack: () => void;
   onStart: () => void;
+  challengesEnabled: boolean;
+  onToggleChallenges: () => void;
 }
 
 function LockIcon({ color }: { color: string }) {
@@ -20,11 +22,12 @@ function LockIcon({ color }: { color: string }) {
   );
 }
 
-export default function Setup({ t, lists, selected, onToggle, onBack, onStart }: Props) {
+export default function Setup({ t, lists, selected, onToggle, onBack, onStart, challengesEnabled, onToggleChallenges }: Props) {
   const [unlockedIds, setUnlockedIds] = useState<Set<string>>(new Set());
   const [modal, setModal] = useState<{ id: string; name: string; color: string } | null>(null);
   const [modalPwd, setModalPwd] = useState('');
   const [modalError, setModalError] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
 
   const selectedCount = lists.filter((l) => selected[l.id]).length;
   const totalQuestions = lists.reduce((n, l) => n + (selected[l.id] ? l.questions.length : 0), 0);
@@ -97,11 +100,33 @@ export default function Setup({ t, lists, selected, onToggle, onBack, onStart }:
             );
           })}
         </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 16, padding: '14px 16px', borderRadius: t.radius, background: t.surface, border: `1px solid ${t.border}` }}>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontFamily: t.fontHead, fontWeight: 600, fontSize: 14 }}>Retos</span>
+            <button
+              onClick={() => setInfoOpen(true)}
+              style={{ width: 18, height: 18, borderRadius: '50%', background: t.surface2, color: t.dim, fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}
+              aria-label="Qué son los retos"
+            >
+              i
+            </button>
+          </div>
+          <button
+            onClick={onToggleChallenges}
+            aria-pressed={challengesEnabled}
+            style={{
+              width: 46, height: 27, borderRadius: 99, padding: 3, flex: 'none', transition: 'background .2s',
+              background: challengesEnabled ? t.heroGrad : t.surface2,
+              display: 'flex', justifyContent: challengesEnabled ? 'flex-end' : 'flex-start',
+            }}
+          >
+            <span style={{ width: 21, height: 21, borderRadius: '50%', background: '#fff', display: 'block' }} />
+          </button>
+        </div>
       </div>
 
-      {/* Absoluto respecto al padding-box del contenedor: ignora su paddingBottom
-          de safe-area, así que el hueco del indicador de inicio se compensa aquí. */}
-      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '18px 24px calc(26px + env(safe-area-inset-bottom))', background: t.footerBg, borderTop: `1px solid ${t.border}`, backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
+      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '18px 24px', paddingBottom: 'max(16px, env(safe-area-inset-bottom, 0px))', background: t.footerBg, borderTop: `1px solid ${t.border}`, backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
           <span style={{ fontSize: 13, color: t.dim }}>{selectedCount} listas seleccionadas</span>
           <span style={{ fontFamily: t.fontHead, fontWeight: 700, fontSize: 18, color: t.accent }}>{totalQuestions} preguntas</span>
@@ -109,9 +134,10 @@ export default function Setup({ t, lists, selected, onToggle, onBack, onStart }:
         <button
           onClick={onStart}
           disabled={!canStart}
+          className={canStart ? 'yn-btn-glow' : undefined}
           style={{
             width: '100%', padding: 19, borderRadius: t.radius, fontFamily: t.fontHead, fontWeight: 700, fontSize: 18, transition: 'all .2s',
-            background: canStart ? t.heroGrad : t.surface,
+            background: canStart ? undefined : t.surface,
             color: canStart ? t.accentText : t.dim,
             boxShadow: canStart ? t.btnShadow : 'none',
             opacity: canStart ? 1 : 0.6,
@@ -160,6 +186,27 @@ export default function Setup({ t, lists, selected, onToggle, onBack, onStart }:
                 Desbloquear
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal explicativo de retos */}
+      {infoOpen && (
+        <div
+          onClick={() => setInfoOpen(false)}
+          style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, backdropFilter: 'blur(6px)', zIndex: 10 }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ width: '100%', maxWidth: 340, background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 28, padding: '28px 24px', boxShadow: t.cardShadow }}
+          >
+            <div style={{ fontFamily: t.fontHead, fontWeight: 700, fontSize: 20, marginBottom: 6 }}>¿Qué son los retos?</div>
+            <div style={{ fontSize: 14, color: t.dim, marginBottom: 20, lineHeight: 1.5 }}>
+              De vez en cuando saltará una ventana con una regla especial (como beber el doble) para la siguiente pregunta.
+            </div>
+            <button onClick={() => setInfoOpen(false)} style={{ width: '100%', padding: 14, borderRadius: t.radius, background: t.heroGrad, color: t.accentText, fontWeight: 700, fontSize: 15, boxShadow: t.btnShadow }}>
+              Entendido
+            </button>
           </div>
         </div>
       )}

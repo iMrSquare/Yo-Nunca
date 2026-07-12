@@ -45,13 +45,17 @@ export default defineConfig(({ mode }) => {
           scope: '/',
           display: 'standalone',
           orientation: 'portrait',
-          theme_color: '#1c0c33',
+          // theme_color es cosa de Android/Chrome (tiñe su UI de
+          // navegador; Safari lo ignora), pero vite-plugin-pwa mete un
+          // valor por defecto propio si se omite (#42b883, verde de Vue),
+          // así que hay que fijarlo igual para no dejar un color random.
+          // background_color: iOS también puede usarlo en su pantalla de
+          // carga al abrir la PWA.
+          theme_color: '#070410',
           background_color: '#070410',
-          icons: [
-            { src: 'pwa-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-            { src: 'pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-            { src: 'maskable-icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
-          ],
+          // Sin icons: iOS nunca lee este array (usa solo el
+          // apple-touch-icon de index.html), y purpose:"maskable" es un
+          // concepto exclusivo del icono adaptable de Android.
         },
         workbox: {
           // Nunca cachear la API: las listas/estadísticas deben ir siempre al servidor.
