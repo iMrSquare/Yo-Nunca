@@ -1,8 +1,8 @@
 import type { Theme } from '../../theme';
 
-const APP_VERSION = '1.2.8';
+const APP_VERSION = '1.2.9';
 const AUTHOR_URL = 'https://imrsquare.com';
-const GITHUB_URL = 'https://github.com/iMrSquare';
+const GITHUB_URL = 'https://github.com/iMrSquare/Yo-Nunca';
 
 interface Props {
   t: Theme;

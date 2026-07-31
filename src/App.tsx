@@ -42,6 +42,7 @@ export default function App() {
   const [activeChallenge, setActiveChallenge] = useState<string | null>(null);
   const [challengeRule, setChallengeRule] = useState<{ idx: number; text: string } | null>(null);
   const gameRef = useRef<Promise<number | null>>(Promise.resolve(null));
+  const usedChallengesRef = useRef<Set<string>>(new Set());
 
   useEffect(() => { fetchLists().then(setLists); }, []);
   useEffect(() => { fetchChallenges().then(setChallenges); }, []);
@@ -53,6 +54,7 @@ export default function App() {
     if (!q.length) return;
     const names = lists.filter((l) => selected[l.id]).map((l) => l.name.split(' ')[0]);
     gameRef.current = startGameRemote(names.join(' · '), challengesEnabled);
+    usedChallengesRef.current = new Set();
     setQueue(q);
     setIdx(0);
     setAnim(null);
@@ -78,8 +80,10 @@ export default function App() {
 
       setChallengeRule((prev) => (prev && prev.idx === next ? prev : null));
       if (challengesEnabled && challenges.length && next < queue.length) {
-        if (Math.random() < challengeChance) {
-          const text = challenges[Math.floor(Math.random() * challenges.length)];
+        const available = challenges.filter((c) => !usedChallengesRef.current.has(c));
+        if (available.length && Math.random() < challengeChance) {
+          const text = available[Math.floor(Math.random() * available.length)];
+          usedChallengesRef.current.add(text);
           setActiveChallenge(text);
           setChallengeRule({ idx: next, text });
           setChallengeChance(CHALLENGE_BASE_CHANCE);
