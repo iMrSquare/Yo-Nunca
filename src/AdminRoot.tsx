@@ -125,7 +125,7 @@ export default function AdminRoot() {
     setChallenges((cs) => (cs ? fn(cs) : cs));
   };
 
-  const addChallenge = (text: string) => mutateChallenges((cs) => [...cs, text]);
+  const addChallenge = (text: string) => mutateChallenges((cs) => [text, ...cs]);
   const updateChallenge = (i: number, text: string) => mutateChallenges((cs) => cs.map((c, j) => (j === i ? text : c)));
   const deleteChallenge = (i: number) => mutateChallenges((cs) => cs.filter((_, j) => j !== i));
   const importChallenges = (texts: string[]) => mutateChallenges(() => texts);
@@ -172,7 +172,7 @@ export default function AdminRoot() {
           onNewList={newList}
           onImportList={importList}
           onRename={(name) => editingId && updateList(editingId, (l) => ({ ...l, name }))}
-          onAddQuestion={(text) => editingId && updateList(editingId, (l) => ({ ...l, questions: [...l.questions, text] }))}
+          onAddQuestion={(text) => editingId && updateList(editingId, (l) => ({ ...l, questions: [text, ...l.questions] }))}
           onUpdateQuestion={(i, val) => editingId && updateList(editingId, (l) => ({ ...l, questions: l.questions.map((q, j) => (j === i ? val : q)) }))}
           onDeleteQuestion={(i) => editingId && updateList(editingId, (l) => ({ ...l, questions: l.questions.filter((_, j) => j !== i) }))}
           onSetPassword={(pwd) => editingId && !SEED_LIST_IDS.has(editingId) && updateList(editingId, (l) => ({ ...l, password: pwd }))}
